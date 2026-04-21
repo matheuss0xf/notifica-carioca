@@ -1,0 +1,45 @@
+# Binaries
+/bin/
+/notifica-carioca
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Docker
+docker-compose.override.yml
+
+# Coverage
+coverage.out
+coverage.html
+
+# Bruno local state and secrets
+bruno/environments/*.bru
+!bruno/environments/*.example.bru
+bruno/*.sqlite
+bruno/*.db
+
+# Logs and runtime artifacts
+*.log
+tmp/
+temp/

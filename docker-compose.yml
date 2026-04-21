@@ -1,0 +1,68 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      SERVER_PORT: "8080"
+      READ_HEADER_TIMEOUT: "5s"
+      READ_TIMEOUT: "15s"
+      WRITE_TIMEOUT: "30s"
+      IDLE_TIMEOUT: "60s"
+      DATABASE_URL: "postgres://notifica:notifica@postgres:5432/notifica_carioca?sslmode=disable"
+      REDIS_URL: "redis://default:${REDIS_PASSWORD:-dev-redis-secret}@redis:6379/0"
+      WEBHOOK_SECRET: "dev-webhook-secret"
+      CPF_HASH_KEY: "dev-cpf-hash-key"
+      JWT_SECRET: "dev-jwt-secret"
+      WS_ALLOWED_ORIGINS: ""
+      IDEMPOTENCY_TTL: "24h"
+      UNREAD_CACHE_TTL: "1h"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: notifica
+      POSTGRES_PASSWORD: notifica
+      POSTGRES_DB: notifica_carioca
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U notifica -d notifica_carioca"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    environment:
+      REDIS_PASSWORD: "${REDIS_PASSWORD:-dev-redis-secret}"
+    command: >
+      sh -c 'exec redis-server --appendonly yes --requirepass "$$REDIS_PASSWORD"'
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a $$REDIS_PASSWORD ping | grep PONG"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:
+  redisdata:
