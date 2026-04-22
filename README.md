@@ -3,6 +3,7 @@
 **Sistema de notificações em tempo real para cidadãos do Rio de Janeiro.**
 
 Recebe webhooks de mudanças de status de chamados da prefeitura, persiste no PostgreSQL e entrega ao cidadão via API REST e WebSocket, com privacidade de CPF, idempotência e escalabilidade horizontal.
+<img width="1774" height="736" alt="image" src="https://github.com/user-attachments/assets/fbb5e8fd-6cf0-4713-b063-822e6f8e8f9c" />
 
 ## Fluxo com LLM
 
