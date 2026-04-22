@@ -66,12 +66,7 @@ bruno:
     @echo "Bruno collection: ./bruno"
     @echo "Use environment: local"
     @echo "Suggested order: Health -> Ready -> Webhook - Status Change -> Notifications - Unread Count -> Notifications - List -> Notifications - Mark Read"
-
-# Show the core validation guide
-validate-core:
-    @echo "Core validation guide: ./docs/VALIDACAO_CORE.md"
-    @echo "Suggested order: stack health -> webhook -> idempotency -> REST -> mark read -> websocket -> ownership -> CPF privacy"
-
+    
 # Show k6 load-test usage
 load:
     @echo "k6 script: ./k6/load_test.js"

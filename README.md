@@ -230,27 +230,6 @@ Atalho:
 just bruno
 ```
 
-### Validação do Core
-
-Antes de investir em diferenciais, valide o núcleo funcional do sistema usando o roteiro em [docs/VALIDACAO_CORE.md](https://github.com/matheuss0xf/notifica-carioca/blob/main/docs/VALIDACAO_CORE.md).
-
-Esse roteiro cobre:
-
-- saúde da stack
-- webhook válido
-- idempotência
-- API REST
-- marcação como lida
-- WebSocket
-- isolamento por cidadão
-- privacidade do CPF
-
-Atalho:
-
-```bash
-just validate-core
-```
-
 ### Testes de Carga com k6
 
 O projeto inclui um cenário inicial de carga em [k6/load_test.js](https://github.com/matheuss0xf/notifica-carioca/blob/main/k6/load_test.js), focado em:
@@ -416,5 +395,3 @@ wscat -c "ws://localhost:8080/ws" -H "Authorization: Bearer $TOKEN"
 - métricas Prometheus
 - tracing com OpenTelemetry
 - replay manual ou worker de retry sobre a DLQ atual
-- circuit breaker no PostgreSQL e no Redis
-- manifestos de Kubernetes com HPA e limites de recursos
