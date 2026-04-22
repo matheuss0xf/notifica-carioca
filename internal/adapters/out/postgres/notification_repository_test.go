@@ -45,15 +45,14 @@ func (r *fakeRows) Scan(dest ...any) error {
 	item := r.items[r.index-1]
 	*(dest[0].(*uuid.UUID)) = item.ID
 	*(dest[1].(*string)) = item.ChamadoID
-	*(dest[2].(*string)) = item.CPFHash
-	*(dest[3].(*string)) = item.Tipo
-	*(dest[4].(**string)) = item.StatusAnterior
-	*(dest[5].(*string)) = item.StatusNovo
-	*(dest[6].(*string)) = item.Titulo
-	*(dest[7].(**string)) = item.Descricao
-	*(dest[8].(**time.Time)) = item.ReadAt
-	*(dest[9].(*time.Time)) = item.EventTimestamp
-	*(dest[10].(*time.Time)) = item.CreatedAt
+	*(dest[2].(*string)) = item.Tipo
+	*(dest[3].(**string)) = item.StatusAnterior
+	*(dest[4].(*string)) = item.StatusNovo
+	*(dest[5].(*string)) = item.Titulo
+	*(dest[6].(**string)) = item.Descricao
+	*(dest[7].(**time.Time)) = item.ReadAt
+	*(dest[8].(*time.Time)) = item.EventTimestamp
+	*(dest[9].(*time.Time)) = item.CreatedAt
 	return nil
 }
 func (r *fakeRows) Values() ([]any, error) { return nil, nil }
@@ -170,7 +169,6 @@ func TestNotificationRepositoryListByOwner(t *testing.T) {
 					return &fakeRows{items: []domain.Notification{{
 						ID:             id,
 						ChamadoID:      "CH-1",
-						CPFHash:        "hashed",
 						Tipo:           "status_change",
 						StatusAnterior: &statusAnterior,
 						StatusNovo:     "done",

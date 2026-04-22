@@ -66,7 +66,7 @@ func (r *NotificationRepository) ListByOwner(ctx context.Context, cpfHash string
 		}
 
 		query := `
-			SELECT id, chamado_id, cpf_hash, tipo, status_anterior, status_novo,
+			SELECT id, chamado_id, tipo, status_anterior, status_novo,
 			       titulo, descricao, read_at, event_timestamp, created_at
 			FROM notifications
 			WHERE cpf_hash = $1
@@ -81,7 +81,7 @@ func (r *NotificationRepository) ListByOwner(ctx context.Context, cpfHash string
 		rows, err = r.pool.Query(ctx, query, cpfHash, cursorID, limit+1)
 	} else {
 		query := `
-			SELECT id, chamado_id, cpf_hash, tipo, status_anterior, status_novo,
+			SELECT id, chamado_id, tipo, status_anterior, status_novo,
 			       titulo, descricao, read_at, event_timestamp, created_at
 			FROM notifications
 			WHERE cpf_hash = $1
@@ -100,9 +100,9 @@ func (r *NotificationRepository) ListByOwner(ctx context.Context, cpfHash string
 	for rows.Next() {
 		var n domain.Notification
 		if scanErr := rows.Scan(
-			&n.ID, &n.ChamadoID, &n.CPFHash, &n.Tipo,
-			&n.StatusAnterior, &n.StatusNovo, &n.Titulo,
-			&n.Descricao, &n.ReadAt, &n.EventTimestamp, &n.CreatedAt,
+			&n.ID, &n.ChamadoID, &n.Tipo, &n.StatusAnterior,
+			&n.StatusNovo, &n.Titulo, &n.Descricao,
+			&n.ReadAt, &n.EventTimestamp, &n.CreatedAt,
 		); scanErr != nil {
 			return nil, fmt.Errorf("scanning notification: %w", scanErr)
 		}
