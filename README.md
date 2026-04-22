@@ -142,6 +142,7 @@ No webhook de status-change, além do schema JSON, o payload é validado para:
 - Docker + Docker Compose
 - Go 1.26.2+ para desenvolvimento local
 - [just](https://github.com/casey/just) como task runner, opcional
+- [mise](https://mise.jdx.dev/) recomendado para padronizar ferramentas como Go, `golangci-lint` e `k6`
 
 ### Com Docker Compose
 
@@ -178,6 +179,12 @@ just test-unit
 
 # Cobertura útil do projeto
 go run ./scripts/coverage
+```
+
+Se você usa `mise`, instale as ferramentas do projeto com:
+
+```bash
+mise install
 ```
 
 ### Testes HTTP com Bruno
@@ -219,6 +226,68 @@ Atalho:
 ```bash
 just validate-core
 ```
+
+### Testes de Carga com k6
+
+O projeto inclui um cenário inicial de carga em [k6/load_test.js](https://github.com/matheuss0xf/notifica-carioca/blob/main/k6/load_test.js), focado em:
+
+- burst de webhook com assinatura HMAC
+- leituras autenticadas em `GET /notifications`
+- leituras autenticadas em `GET /notifications/unread-count`
+
+Também inclui um cenário de fluxo completo em [k6/full_flow.js](https://github.com/matheuss0xf/notifica-carioca/blob/main/k6/full_flow.js), cobrindo:
+
+- criação de notificação por webhook
+- leitura de unread count
+- listagem da notificação criada
+- marcação como lida
+- rejeição da segunda marcação como lida
+- reconhecimento de webhook duplicado
+- entrega em tempo real via WebSocket
+
+Exemplo de execução:
+
+```bash
+k6 run ./k6/load_test.js
+```
+
+Se o comando `k6` não existir no seu shell, instale as ferramentas do projeto com:
+
+```bash
+mise install
+```
+
+Exemplo com parâmetros:
+
+```bash
+APP_URL=http://localhost:8080 \
+WEBHOOK_SECRET=dev-webhook-secret \
+JWT_SECRET=dev-jwt-secret \
+WEBHOOK_RATE=50 \
+WEBHOOK_DURATION=2m \
+READ_TARGET_VUS=20 \
+k6 run ./k6/load_test.js
+```
+
+Atalho:
+
+```bash
+just load
+```
+
+Fluxo completo:
+
+```bash
+mise exec -- k6 run ./k6/full_flow.js
+```
+
+Atalho:
+
+```bash
+just load-flow
+```
+
+Importante: um teste verde no `full_flow.js` prova corretude ponta a ponta do fluxo principal. Ele não prova, sozinho, capacidade para `1M` de requisições. Para isso, é preciso elevar taxa, duração, concorrência e observar recursos do ambiente durante a execução.
 
 ---
 
@@ -298,4 +367,3 @@ wscat -c "ws://localhost:8080/ws" -H "Authorization: Bearer $TOKEN"
 - dead letter queue com Redis Streams
 - circuit breaker no PostgreSQL e no Redis
 - manifestos de Kubernetes com HPA e limites de recursos
-- testes de carga com k6
