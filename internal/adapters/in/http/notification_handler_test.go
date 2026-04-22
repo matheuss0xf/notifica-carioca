@@ -79,8 +79,8 @@ func TestNotificationHandlerList(t *testing.T) {
 			},
 		},
 		{
-			name:    "success passes cursor and capped limit",
-			cpfHash: "hashed-cpf",
+			name:     "success passes cursor and capped limit",
+			cpfHash:  "hashed-cpf",
 			rawQuery: "cursor=abc&limit=999",
 			lister: &stubNotificationLister{
 				listFn: func(ctx context.Context, cpfHash string, cursor *string, limit int) (*domain.NotificationPage, error) {
@@ -95,12 +95,12 @@ func TestNotificationHandlerList(t *testing.T) {
 					}
 					return &domain.NotificationPage{
 						Data: []domain.Notification{{
-							ID:        expectedID,
-							ChamadoID: "CH-1",
-							Tipo:      "status_change",
-							StatusNovo:"done",
-							Titulo:    "Titulo",
-							CreatedAt: now,
+							ID:         expectedID,
+							ChamadoID:  "CH-1",
+							Tipo:       "status_change",
+							StatusNovo: "done",
+							Titulo:     "Titulo",
+							CreatedAt:  now,
 						}},
 						NextCursor: &expectedCursor,
 						HasMore:    true,
@@ -126,8 +126,8 @@ func TestNotificationHandlerList(t *testing.T) {
 			},
 		},
 		{
-			name:    "invalid limit falls back to default",
-			cpfHash: "hashed-cpf",
+			name:     "invalid limit falls back to default",
+			cpfHash:  "hashed-cpf",
 			rawQuery: "limit=abc",
 			lister: &stubNotificationLister{
 				listFn: func(ctx context.Context, cpfHash string, cursor *string, limit int) (*domain.NotificationPage, error) {

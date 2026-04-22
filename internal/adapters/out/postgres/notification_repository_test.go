@@ -30,9 +30,9 @@ type fakeRows struct {
 	err   error
 }
 
-func (r *fakeRows) Close() {}
-func (r *fakeRows) Err() error { return r.err }
-func (r *fakeRows) CommandTag() pgconn.CommandTag { return pgconn.NewCommandTag("SELECT 0") }
+func (r *fakeRows) Close()                                       {}
+func (r *fakeRows) Err() error                                   { return r.err }
+func (r *fakeRows) CommandTag() pgconn.CommandTag                { return pgconn.NewCommandTag("SELECT 0") }
 func (r *fakeRows) FieldDescriptions() []pgconn.FieldDescription { return nil }
 func (r *fakeRows) Next() bool {
 	if r.index >= len(r.items) {
@@ -57,8 +57,8 @@ func (r *fakeRows) Scan(dest ...any) error {
 	return nil
 }
 func (r *fakeRows) Values() ([]any, error) { return nil, nil }
-func (r *fakeRows) RawValues() [][]byte { return nil }
-func (r *fakeRows) Conn() *pgx.Conn { return nil }
+func (r *fakeRows) RawValues() [][]byte    { return nil }
+func (r *fakeRows) Conn() *pgx.Conn        { return nil }
 
 type fakeStore struct {
 	queryRowFn func(ctx context.Context, sql string, args ...any) pgx.Row
@@ -83,10 +83,10 @@ func TestNotificationRepositoryCreate(t *testing.T) {
 	notification := &domain.Notification{ID: id}
 
 	tests := []struct {
-		name      string
-		store     *fakeStore
-		want      bool
-		wantErr   bool
+		name    string
+		store   *fakeStore
+		want    bool
+		wantErr bool
 	}{
 		{
 			name: "created",
@@ -147,17 +147,17 @@ func TestNotificationRepositoryListByOwner(t *testing.T) {
 	cursor := uuid.New().String()
 
 	tests := []struct {
-		name      string
-		cursor    *string
-		store     *fakeStore
-		wantLen   int
-		wantErr   bool
+		name    string
+		cursor  *string
+		store   *fakeStore
+		wantLen int
+		wantErr bool
 	}{
 		{
-			name:   "invalid cursor",
-			cursor: func() *string { s := "bad-cursor"; return &s }(),
-			store:  &fakeStore{},
-			wantErr:true,
+			name:    "invalid cursor",
+			cursor:  func() *string { s := "bad-cursor"; return &s }(),
+			store:   &fakeStore{},
+			wantErr: true,
 		},
 		{
 			name:   "lists without cursor",

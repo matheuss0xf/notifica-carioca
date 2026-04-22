@@ -52,11 +52,11 @@ func TestNotificationMarkerMarkAsRead(t *testing.T) {
 	id := uuid.New()
 
 	tests := []struct {
-		name      string
-		repo      *markerRepoStub
-		cache     *markerCacheStub
-		want      bool
-		wantErr   bool
+		name    string
+		repo    *markerRepoStub
+		cache   *markerCacheStub
+		want    bool
+		wantErr bool
 	}{
 		{
 			name: "updated invalidates cache",
