@@ -72,6 +72,19 @@ validate-core:
     @echo "Core validation guide: ./docs/VALIDACAO_CORE.md"
     @echo "Suggested order: stack health -> webhook -> idempotency -> REST -> mark read -> websocket -> ownership -> CPF privacy"
 
+# Show k6 load-test usage
+load:
+    @echo "k6 script: ./k6/load_test.js"
+    @echo "If k6 is not installed: mise install"
+    @echo "Run example: k6 run ./k6/load_test.js"
+    @echo "Optional env vars: APP_URL, WEBHOOK_SECRET, JWT_SECRET, WEBHOOK_RATE, WEBHOOK_DURATION, READ_TARGET_VUS"
+
+# Show full flow k6 usage
+load-flow:
+    @echo "k6 script: ./k6/full_flow.js"
+    @echo "Run example: mise exec -- k6 run ./k6/full_flow.js"
+    @echo "Optional env vars: APP_URL, WEBHOOK_SECRET, JWT_SECRET, FLOW_VUS, FLOW_ITERATIONS, WS_FLOW_VUS, WS_FLOW_ITERATIONS, WS_TIMEOUT_MS"
+
 # Tidy dependencies
 tidy:
     go mod tidy
