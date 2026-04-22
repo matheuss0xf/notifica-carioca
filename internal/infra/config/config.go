@@ -35,6 +35,7 @@ type Config struct {
 
 	IdempotencyTTL time.Duration `env:"IDEMPOTENCY_TTL" envDefault:"24h"`
 	UnreadCacheTTL time.Duration `env:"UNREAD_CACHE_TTL" envDefault:"1h"`
+	WebhookDLQKey  string        `env:"WEBHOOK_DLQ_KEY" envDefault:"webhook:dlq"`
 }
 
 // Load parses environment variables into a Config struct.

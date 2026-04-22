@@ -16,6 +16,7 @@ type WebhookProcessor struct {
 	repo      ports.NotificationRepository
 	cache     ports.UnreadCache
 	idemp     ports.IdempotencyStore
+	dlq       ports.WebhookDeadLetterQueue
 	publisher ports.EventPublisher
 	hasher    ports.CPFHasher
 }
@@ -25,6 +26,7 @@ func NewWebhookProcessor(
 	repo ports.NotificationRepository,
 	cache ports.UnreadCache,
 	idemp ports.IdempotencyStore,
+	dlq ports.WebhookDeadLetterQueue,
 	publisher ports.EventPublisher,
 	hasher ports.CPFHasher,
 ) *WebhookProcessor {
@@ -32,6 +34,7 @@ func NewWebhookProcessor(
 		repo:      repo,
 		cache:     cache,
 		idemp:     idemp,
+		dlq:       dlq,
 		publisher: publisher,
 		hasher:    hasher,
 	}
@@ -76,6 +79,25 @@ func (p *WebhookProcessor) ProcessWebhook(ctx context.Context, event domain.Webh
 
 	created, err := p.repo.Create(ctx, notification)
 	if err != nil {
+		deadLetter := domain.WebhookDeadLetter{
+			FailedAt:       time.Now().UTC(),
+			Stage:          "persistence",
+			Reason:         err.Error(),
+			CPFHash:        cpfHash,
+			IdempotencyKey: idempKey,
+			Event: domain.WebhookDeadLetterEvent{
+				ChamadoID:      event.ChamadoID,
+				Tipo:           event.Tipo,
+				StatusAnterior: event.StatusAnterior,
+				StatusNovo:     event.StatusNovo,
+				Titulo:         event.Titulo,
+				Descricao:      event.Descricao,
+				Timestamp:      event.Timestamp,
+			},
+		}
+		if dlqErr := p.dlq.Enqueue(ctx, deadLetter); dlqErr != nil {
+			slog.Error("failed to enqueue webhook dead letter", "error", dlqErr, "chamado_id", event.ChamadoID)
+		}
 		return nil, fmt.Errorf("creating notification: %w", err)
 	}
 	if !created {

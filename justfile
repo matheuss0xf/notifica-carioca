@@ -85,6 +85,11 @@ load-flow:
     @echo "Run example: mise exec -- k6 run ./k6/full_flow.js"
     @echo "Optional env vars: APP_URL, WEBHOOK_SECRET, JWT_SECRET, FLOW_VUS, FLOW_ITERATIONS, WS_FLOW_VUS, WS_FLOW_ITERATIONS, WS_TIMEOUT_MS"
 
+# Show progressive capacity test guide
+load-capacity:
+    @echo "Progressive load guide: ./docs/CARGA_PROGRESSIVA.md"
+    @echo "Suggested order: baseline -> carga leve -> carga moderada -> carga alta -> stress controlado"
+
 # Tidy dependencies
 tidy:
     go mod tidy

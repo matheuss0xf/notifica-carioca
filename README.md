@@ -289,6 +289,27 @@ just load-flow
 
 Importante: um teste verde no `full_flow.js` prova corretude ponta a ponta do fluxo principal. Ele não prova, sozinho, capacidade para `1M` de requisições. Para isso, é preciso elevar taxa, duração, concorrência e observar recursos do ambiente durante a execução.
 
+Para essa etapa, use o roteiro em [docs/CARGA_PROGRESSIVA.md](https://github.com/matheuss0xf/notifica-carioca/blob/main/docs/CARGA_PROGRESSIVA.md).
+
+Atalho:
+
+```bash
+just load-capacity
+```
+
+Exemplo de resultado documentável:
+
+- ambiente: Docker Compose local
+- cenário: `k6/load_test.js`
+- webhook: `50 req/s` por `2 min`
+- leitura: até `20` VUs
+- total HTTP: `9621` requests
+- `p95`: `2.69ms`
+- taxa de erro HTTP: `0%`
+- checks: `100%`
+
+Esse tipo de registro é útil porque mostra o que foi validado de fato.
+
 ---
 
 ## Exemplos de Uso

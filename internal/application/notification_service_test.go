@@ -75,6 +75,16 @@ func (s *stubPublisher) Publish(ctx context.Context, cpfHash string, n *domain.N
 	return s.publishErr
 }
 
+type recordingWebhookDeadLetterQueue struct {
+	enqueued []domain.WebhookDeadLetter
+	err      error
+}
+
+func (q *recordingWebhookDeadLetterQueue) Enqueue(ctx context.Context, deadLetter domain.WebhookDeadLetter) error {
+	q.enqueued = append(q.enqueued, deadLetter)
+	return q.err
+}
+
 type stubHasher struct{}
 
 func (s *stubHasher) Hash(cpf string) string { return "hashed:" + cpf }
@@ -122,6 +132,7 @@ func TestProcessWebhookUsesPreciseIdempotencyKey(t *testing.T) {
 		&stubNotificationRepository{},
 		&stubUnreadCache{},
 		idemp,
+		&recordingWebhookDeadLetterQueue{},
 		&stubPublisher{},
 		&stubHasher{},
 	)
@@ -164,6 +175,7 @@ func TestProcessWebhookRejectsInvalidCPF(t *testing.T) {
 		&stubNotificationRepository{},
 		&stubUnreadCache{},
 		&recordingIdempotencyStore{exists: map[string]bool{}},
+		&recordingWebhookDeadLetterQueue{},
 		&stubPublisher{},
 		&stubHasher{},
 	)
@@ -199,6 +211,7 @@ func TestProcessWebhookReturnsNilForDuplicateFromStore(t *testing.T) {
 		}},
 		&stubUnreadCache{},
 		idemp,
+		&recordingWebhookDeadLetterQueue{},
 		&stubPublisher{},
 		&stubHasher{},
 	)
@@ -226,6 +239,7 @@ func TestProcessWebhookReturnsNilForDuplicateFromDB(t *testing.T) {
 		}},
 		&stubUnreadCache{},
 		&recordingIdempotencyStore{exists: map[string]bool{}},
+		&recordingWebhookDeadLetterQueue{},
 		&stubPublisher{},
 		&stubHasher{},
 	)
@@ -247,12 +261,14 @@ func TestProcessWebhookReturnsNilForDuplicateFromDB(t *testing.T) {
 }
 
 func TestProcessWebhookWrapsRepositoryError(t *testing.T) {
+	dlq := &recordingWebhookDeadLetterQueue{}
 	svc := NewWebhookProcessor(
 		&stubNotificationRepository{createFn: func(ctx context.Context, n *domain.Notification) (bool, error) {
 			return false, errors.New("db down")
 		}},
 		&stubUnreadCache{},
 		&recordingIdempotencyStore{exists: map[string]bool{}},
+		dlq,
 		&stubPublisher{},
 		&stubHasher{},
 	)
@@ -267,6 +283,12 @@ func TestProcessWebhookWrapsRepositoryError(t *testing.T) {
 	}); err == nil {
 		t.Fatal("expected wrapped repository error")
 	}
+	if len(dlq.enqueued) != 1 {
+		t.Fatalf("expected one dead-letter entry, got %d", len(dlq.enqueued))
+	}
+	if dlq.enqueued[0].Stage != "persistence" || dlq.enqueued[0].CPFHash != "hashed:52998224725" {
+		t.Fatalf("unexpected dead-letter payload: %#v", dlq.enqueued[0])
+	}
 }
 
 func TestProcessWebhookSwallowsPostPersistSideEffectErrors(t *testing.T) {
@@ -280,6 +302,7 @@ func TestProcessWebhookSwallowsPostPersistSideEffectErrors(t *testing.T) {
 		}},
 		cache,
 		idemp,
+		&recordingWebhookDeadLetterQueue{},
 		publisher,
 		&stubHasher{},
 	)
