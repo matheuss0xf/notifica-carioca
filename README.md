@@ -294,12 +294,6 @@ Importante: um teste verde no `full_flow.js` prova corretude ponta a ponta do fl
 
 Para essa etapa, use o roteiro em [docs/CARGA_PROGRESSIVA.md](https://github.com/matheuss0xf/notifica-carioca/blob/main/docs/CARGA_PROGRESSIVA.md).
 
-Atalho:
-
-```bash
-just load-capacity
-```
-
 Exemplo de resultado documentável:
 
 - ambiente: Docker Compose local
