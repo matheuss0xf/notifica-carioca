@@ -21,6 +21,7 @@ import (
 	"github.com/matheuss0xf/notifica-carioca/internal/application"
 	"github.com/matheuss0xf/notifica-carioca/internal/infra/config"
 	"github.com/matheuss0xf/notifica-carioca/internal/infra/crypto"
+	"github.com/matheuss0xf/notifica-carioca/internal/infra/resilience"
 	"github.com/matheuss0xf/notifica-carioca/internal/infra/server"
 )
 
@@ -74,11 +75,26 @@ func main() {
 	}
 	slog.Info("connected to redis")
 
-	repo := postgres.NewNotificationRepository(pool)
-	cache := redisadapter.NewUnreadCache(redisClient, cfg.UnreadCacheTTL)
+	postgresBreaker := resilience.NewCircuitBreaker(cfg.PostgresCircuitBreakerFailures, cfg.PostgresCircuitBreakerTimeout)
+	redisBreaker := resilience.NewCircuitBreaker(cfg.RedisCircuitBreakerFailures, cfg.RedisCircuitBreakerTimeout)
+
+	repo := postgres.NewCircuitBreakerNotificationRepository(
+		postgres.NewNotificationRepository(pool),
+		postgresBreaker,
+	)
+	cache := redisadapter.NewCircuitBreakerUnreadCache(
+		redisadapter.NewUnreadCache(redisClient, cfg.UnreadCacheTTL),
+		redisBreaker,
+	)
 	idemp := redisadapter.NewIdempotencyStore(redisClient, cfg.IdempotencyTTL)
-	dlq := redisadapter.NewWebhookDeadLetterQueue(redisClient, cfg.WebhookDLQKey, cfg.WebhookDLQMaxLen)
-	publisher := redisadapter.NewPublisher(redisClient)
+	dlq := redisadapter.NewCircuitBreakerWebhookDeadLetterQueue(
+		redisadapter.NewWebhookDeadLetterQueue(redisClient, cfg.WebhookDLQKey, cfg.WebhookDLQMaxLen),
+		redisBreaker,
+	)
+	publisher := redisadapter.NewCircuitBreakerPublisher(
+		redisadapter.NewPublisher(redisClient),
+		redisBreaker,
+	)
 	subscriber := redisadapter.NewSubscriber(redisClient)
 	hub := ws.NewHub()
 	cpfHasher := crypto.NewCPFHasher(cfg.CPFHashKey)

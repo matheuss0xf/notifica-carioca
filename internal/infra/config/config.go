@@ -37,6 +37,11 @@ type Config struct {
 	UnreadCacheTTL   time.Duration `env:"UNREAD_CACHE_TTL" envDefault:"1h"`
 	WebhookDLQKey    string        `env:"WEBHOOK_DLQ_KEY" envDefault:"webhook:dlq"`
 	WebhookDLQMaxLen int64         `env:"WEBHOOK_DLQ_MAX_LEN" envDefault:"1000"`
+
+	PostgresCircuitBreakerFailures uint32        `env:"POSTGRES_CB_FAILURE_THRESHOLD" envDefault:"5"`
+	PostgresCircuitBreakerTimeout  time.Duration `env:"POSTGRES_CB_OPEN_TIMEOUT" envDefault:"30s"`
+	RedisCircuitBreakerFailures    uint32        `env:"REDIS_CB_FAILURE_THRESHOLD" envDefault:"5"`
+	RedisCircuitBreakerTimeout     time.Duration `env:"REDIS_CB_OPEN_TIMEOUT" envDefault:"30s"`
 }
 
 // Load parses environment variables into a Config struct.

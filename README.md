@@ -63,6 +63,7 @@ O serviço já aplica um pacote básico de hardening:
 - rate limiting por IP para webhook, endpoints de notificações e tentativas de conexão WebSocket
 - security headers globais, incluindo `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` e `Content-Security-Policy`
 - `Strict-Transport-Security` opcional por configuração, para ambientes com HTTPS real
+- circuit breaker simples para chamadas de PostgreSQL e operações Redis de escrita/publicação, evitando insistir indefinidamente em dependências degradadas
 
 ### WebSocket com Canal Único
 
@@ -393,6 +394,10 @@ wscat -c "ws://localhost:8080/ws" -H "Authorization: Bearer $TOKEN"
 | `UNREAD_CACHE_TTL` | ❌ | 1h | TTL do cache de não lidas |
 | `WEBHOOK_DLQ_KEY` | ❌ | webhook:dlq | Chave Redis usada para armazenar a dead letter queue de falhas de persistência |
 | `WEBHOOK_DLQ_MAX_LEN` | ❌ | 1000 | Quantidade máxima de itens mantidos na DLQ antes de truncar os mais antigos |
+| `POSTGRES_CB_FAILURE_THRESHOLD` | ❌ | 5 | Quantidade de falhas consecutivas para abrir o circuit breaker do PostgreSQL |
+| `POSTGRES_CB_OPEN_TIMEOUT` | ❌ | 30s | Tempo em que o breaker do PostgreSQL permanece aberto antes de testar meia-abertura |
+| `REDIS_CB_FAILURE_THRESHOLD` | ❌ | 5 | Quantidade de falhas consecutivas para abrir o circuit breaker do Redis |
+| `REDIS_CB_OPEN_TIMEOUT` | ❌ | 30s | Tempo em que o breaker do Redis permanece aberto antes de testar meia-abertura |
 | `SHUTDOWN_TIMEOUT` | ❌ | 10s | Timeout para graceful shutdown |
 | `READ_HEADER_TIMEOUT` | ❌ | 5s | Timeout para leitura inicial de headers |
 | `READ_TIMEOUT` | ❌ | 15s | Timeout total de leitura HTTP |
