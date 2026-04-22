@@ -62,7 +62,11 @@ func NewSubscriber(client *goredis.Client) *Subscriber {
 // The handler is called for each received message. Blocks until ctx is cancelled.
 func (s *Subscriber) Consume(ctx context.Context, handler func(context.Context, string, domain.Notification) error) error {
 	sub := s.client.Subscribe(ctx, channelName)
-	defer sub.Close()
+	defer func() {
+		if closeErr := sub.Close(); closeErr != nil {
+			slog.Warn("closing redis subscription", "error", closeErr)
+		}
+	}()
 
 	// Wait for subscription confirmation
 	if _, err := sub.Receive(ctx); err != nil {

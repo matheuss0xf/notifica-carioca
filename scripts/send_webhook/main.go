@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"time"
@@ -23,6 +24,8 @@ type webhookPayload struct {
 }
 
 func main() {
+	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
+
 	baseURL := os.Getenv("APP_URL")
 	if baseURL == "" {
 		baseURL = "http://localhost:8080"
@@ -46,13 +49,13 @@ func main() {
 
 	body, err := json.Marshal(payload)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "marshal payload: %v\n", err)
+		logger.Error("marshal payload", "error", err)
 		os.Exit(1)
 	}
 
 	req, err := http.NewRequest(http.MethodPost, baseURL+"/api/v1/webhooks/status-change", bytes.NewReader(body))
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "build request: %v\n", err)
+		logger.Error("build request", "error", err)
 		os.Exit(1)
 	}
 
@@ -61,10 +64,14 @@ func main() {
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "send request: %v\n", err)
+		logger.Error("send request", "error", err)
 		os.Exit(1)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			logger.Warn("close response body", "error", closeErr)
+		}
+	}()
 
 	fmt.Printf("status=%s\n", resp.Status)
 }

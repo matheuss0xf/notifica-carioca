@@ -62,7 +62,11 @@ func main() {
 		os.Exit(1)
 	}
 	redisClient := goredis.NewClient(redisOpts)
-	defer redisClient.Close()
+	defer func() {
+		if closeErr := redisClient.Close(); closeErr != nil {
+			slog.Warn("failed to close redis client", "error", closeErr)
+		}
+	}()
 
 	if err := redisClient.Ping(ctx).Err(); err != nil {
 		slog.Error("failed to ping redis", "error", err)

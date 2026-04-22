@@ -133,7 +133,11 @@ func TestWebSocketHandleUpgradesAndRegistersClient(t *testing.T) {
 	if err != nil {
 		t.Fatalf("dial websocket: %v (resp=%v)", err, resp)
 	}
-	defer conn.Close()
+	t.Cleanup(func() {
+		if closeErr := conn.Close(); closeErr != nil {
+			t.Fatalf("close websocket: %v", closeErr)
+		}
+	})
 
 	if got := hub.ConnectedCount(); got != 1 {
 		t.Fatalf("expected 1 connected client, got %d", got)

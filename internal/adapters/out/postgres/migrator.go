@@ -24,10 +24,19 @@ func (m *Migrator) Up(databaseURL string) error {
 	if err != nil {
 		return fmt.Errorf("creating migration instance: %w", err)
 	}
-	defer instance.Close()
+	defer func() {
+		sourceErr, databaseErr := instance.Close()
+		if sourceErr != nil || databaseErr != nil {
+			err = fmt.Errorf("closing migration instance: source=%v database=%v", sourceErr, databaseErr)
+		}
+	}()
 
 	if err := instance.Up(); err != nil && err != migrate.ErrNoChange {
 		return fmt.Errorf("running migrations: %w", err)
+	}
+
+	if err != nil {
+		return err
 	}
 
 	return nil

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"time"
 
@@ -9,6 +10,8 @@ import (
 )
 
 func main() {
+	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
+
 	if len(os.Args) != 2 {
 		fmt.Fprintln(os.Stderr, "usage: go run ./scripts/gen_jwt <cpf>")
 		os.Exit(1)
@@ -27,7 +30,7 @@ func main() {
 
 	signed, err := token.SignedString([]byte(secret))
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "signing token: %v\n", err)
+		logger.Error("signing token", "error", err)
 		os.Exit(1)
 	}
 
