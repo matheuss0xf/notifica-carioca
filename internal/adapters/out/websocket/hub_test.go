@@ -77,15 +77,6 @@ func TestConnectedCountTracksRegisteredClients(t *testing.T) {
 	}
 }
 
-func TestRedactCPFHash(t *testing.T) {
-	if got := redactCPFHash("1234567"); got != "1234567" {
-		t.Fatalf("expected short hash unchanged, got %q", got)
-	}
-	if got := redactCPFHash("1234567890"); got != "12345678..." {
-		t.Fatalf("expected redacted hash, got %q", got)
-	}
-}
-
 func TestBroadcastNotificationWithNoClientsDoesNothing(t *testing.T) {
 	hub := NewHub()
 	if err := hub.BroadcastNotification(context.Background(), "missing", domain.Notification{}); err != nil {

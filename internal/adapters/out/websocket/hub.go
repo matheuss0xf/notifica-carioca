@@ -118,13 +118,6 @@ type Hub struct {
 	connections map[string]map[*Client]struct{} // cpf_hash -> set of clients
 }
 
-func redactCPFHash(cpfHash string) string {
-	if len(cpfHash) <= 8 {
-		return cpfHash
-	}
-	return cpfHash[:8] + "..."
-}
-
 // NewHub creates a new WebSocket hub.
 func NewHub() *Hub {
 	return &Hub{
@@ -142,7 +135,7 @@ func (h *Hub) Register(client *Client) {
 	}
 	h.connections[client.CpfHash][client] = struct{}{}
 
-	slog.Info("ws client registered", "cpf_hash", redactCPFHash(client.CpfHash))
+	slog.Info("ws client registered")
 }
 
 // Unregister removes a client from the hub and closes its send channel.
@@ -161,7 +154,7 @@ func (h *Hub) Unregister(client *Client) {
 		}
 	}
 
-	slog.Info("ws client unregistered", "cpf_hash", redactCPFHash(client.CpfHash))
+	slog.Info("ws client unregistered")
 }
 
 func (h *Hub) clientsForCPF(cpfHash string) []*Client {
@@ -201,7 +194,7 @@ func (h *Hub) BroadcastNotification(ctx context.Context, cpfHash string, notific
 		case client.send <- data:
 		default:
 			// Client buffer full — disconnect
-			slog.Warn("ws client buffer full, disconnecting", "cpf_hash", redactCPFHash(cpfHash))
+			slog.Warn("ws client buffer full, disconnecting")
 			go h.Unregister(client)
 		}
 	}
