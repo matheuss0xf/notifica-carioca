@@ -15,7 +15,7 @@ import (
 func TestWebhookDeadLetterQueueEnqueue(t *testing.T) {
 	mr := miniredis.RunT(t)
 	client := goredis.NewClient(&goredis.Options{Addr: mr.Addr()})
-	queue := NewWebhookDeadLetterQueue(client, "webhook:dlq:test")
+	queue := NewWebhookDeadLetterQueue(client, "webhook:dlq:test", 1000)
 
 	deadLetter := domain.WebhookDeadLetter{
 		FailedAt:       time.Date(2026, 4, 22, 2, 0, 0, 0, time.UTC),
@@ -52,5 +52,39 @@ func TestWebhookDeadLetterQueueEnqueue(t *testing.T) {
 
 	if got.CPFHash != deadLetter.CPFHash || got.Event.ChamadoID != deadLetter.Event.ChamadoID {
 		t.Fatalf("unexpected dead-letter payload: %#v", got)
+	}
+}
+
+func TestWebhookDeadLetterQueueTrimsToMaxLen(t *testing.T) {
+	mr := miniredis.RunT(t)
+	client := goredis.NewClient(&goredis.Options{Addr: mr.Addr()})
+	queue := NewWebhookDeadLetterQueue(client, "webhook:dlq:test", 2)
+
+	for i := 0; i < 3; i++ {
+		err := queue.Enqueue(context.Background(), domain.WebhookDeadLetter{
+			FailedAt:       time.Date(2026, 4, 22, 2, i, 0, 0, time.UTC),
+			Stage:          "persistence",
+			Reason:         "db down",
+			CPFHash:        "hashed:52998224725",
+			IdempotencyKey: "idemp:key",
+			Event: domain.WebhookDeadLetterEvent{
+				ChamadoID:  "CH-1",
+				Tipo:       "status_change",
+				StatusNovo: "em_execucao",
+				Titulo:     "Titulo",
+				Timestamp:  time.Date(2026, 4, 22, 1, 59, 0, 0, time.UTC),
+			},
+		})
+		if err != nil {
+			t.Fatalf("unexpected enqueue error: %v", err)
+		}
+	}
+
+	length, err := client.LLen(context.Background(), "webhook:dlq:test").Result()
+	if err != nil {
+		t.Fatalf("reading redis list length: %v", err)
+	}
+	if length != 2 {
+		t.Fatalf("expected DLQ length 2 after trim, got %d", length)
 	}
 }

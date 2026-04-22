@@ -33,9 +33,10 @@ type Config struct {
 	EnableHSTS             bool          `env:"ENABLE_HSTS" envDefault:"false"`
 	HSTSMaxAgeSeconds      int           `env:"HSTS_MAX_AGE_SECONDS" envDefault:"31536000"`
 
-	IdempotencyTTL time.Duration `env:"IDEMPOTENCY_TTL" envDefault:"24h"`
-	UnreadCacheTTL time.Duration `env:"UNREAD_CACHE_TTL" envDefault:"1h"`
-	WebhookDLQKey  string        `env:"WEBHOOK_DLQ_KEY" envDefault:"webhook:dlq"`
+	IdempotencyTTL   time.Duration `env:"IDEMPOTENCY_TTL" envDefault:"24h"`
+	UnreadCacheTTL   time.Duration `env:"UNREAD_CACHE_TTL" envDefault:"1h"`
+	WebhookDLQKey    string        `env:"WEBHOOK_DLQ_KEY" envDefault:"webhook:dlq"`
+	WebhookDLQMaxLen int64         `env:"WEBHOOK_DLQ_MAX_LEN" envDefault:"1000"`
 }
 
 // Load parses environment variables into a Config struct.

@@ -5,11 +5,11 @@ import "time"
 // WebhookDeadLetter stores the minimum data needed to inspect or replay a webhook
 // that failed after validation but before notification persistence completed.
 type WebhookDeadLetter struct {
-	FailedAt       time.Time           `json:"failed_at"`
-	Stage          string              `json:"stage"`
-	Reason         string              `json:"reason"`
-	CPFHash        string              `json:"cpf_hash"`
-	IdempotencyKey string              `json:"idempotency_key"`
+	FailedAt       time.Time              `json:"failed_at"`
+	Stage          string                 `json:"stage"`
+	Reason         string                 `json:"reason"`
+	CPFHash        string                 `json:"cpf_hash"`
+	IdempotencyKey string                 `json:"idempotency_key"`
 	Event          WebhookDeadLetterEvent `json:"event"`
 }
 

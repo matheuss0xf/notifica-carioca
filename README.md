@@ -36,6 +36,7 @@ O volume estimado do desafio é bem atendido por Go + PostgreSQL + Redis. Kafka 
 | **PostgreSQL** | Fonte da verdade para notificações. A unique constraint garante idempotência. |
 | **Redis Pub/Sub** | Ponte entre o webhook recebido e o push WebSocket em tempo real. O filtro por `cpf_hash` é feito localmente no Hub. |
 | **Redis Cache** | Cache do contador de não lidas e deduplicação rápida de webhooks como fast-path. |
+| **Redis DLQ** | Buffer operacional para webhooks validados que falharam na persistência, com retenção limitada por tamanho para não crescer sem controle. |
 
 ### Privacidade do CPF
 
@@ -66,6 +67,27 @@ O serviço já aplica um pacote básico de hardening:
 ### WebSocket com Canal Único
 
 Uma goroutine subscrita ao canal `notifications` do Redis Pub/Sub recebe eventos e o Hub entrega apenas para conexões do `cpf_hash` correspondente.
+
+### Dead Letter Queue para falhas de persistência
+
+Quando um webhook já validado falha em `repo.Create(...)`, o evento não é descartado silenciosamente.
+
+- o payload validado vai para uma DLQ no Redis
+- o item salvo não inclui CPF em claro, apenas `cpf_hash`
+- a resposta do webhook continua sendo erro, porque a persistência principal falhou
+- a DLQ é tratada como buffer operacional, não armazenamento permanente
+
+Para evitar crescimento infinito e pressão de memória no Redis:
+
+- a fila usa um tamanho máximo configurável
+- cada novo item faz `LPUSH` seguido de `LTRIM`
+- os itens mais recentes são preservados
+- os itens mais antigos são descartados quando o limite é atingido
+
+Configuração padrão:
+
+- `WEBHOOK_DLQ_KEY=webhook:dlq`
+- `WEBHOOK_DLQ_MAX_LEN=1000`
 
 ---
 
@@ -369,6 +391,8 @@ wscat -c "ws://localhost:8080/ws" -H "Authorization: Bearer $TOKEN"
 | `HSTS_MAX_AGE_SECONDS` | ❌ | 31536000 | Valor de `max-age` do header HSTS em segundos |
 | `IDEMPOTENCY_TTL` | ❌ | 24h | TTL da chave de idempotência no Redis |
 | `UNREAD_CACHE_TTL` | ❌ | 1h | TTL do cache de não lidas |
+| `WEBHOOK_DLQ_KEY` | ❌ | webhook:dlq | Chave Redis usada para armazenar a dead letter queue de falhas de persistência |
+| `WEBHOOK_DLQ_MAX_LEN` | ❌ | 1000 | Quantidade máxima de itens mantidos na DLQ antes de truncar os mais antigos |
 | `SHUTDOWN_TIMEOUT` | ❌ | 10s | Timeout para graceful shutdown |
 | `READ_HEADER_TIMEOUT` | ❌ | 5s | Timeout para leitura inicial de headers |
 | `READ_TIMEOUT` | ❌ | 15s | Timeout total de leitura HTTP |
@@ -385,6 +409,6 @@ wscat -c "ws://localhost:8080/ws" -H "Authorization: Bearer $TOKEN"
 - particionamento da tabela `notifications` por mês
 - métricas Prometheus
 - tracing com OpenTelemetry
-- dead letter queue com Redis Streams
+- replay manual ou worker de retry sobre a DLQ atual
 - circuit breaker no PostgreSQL e no Redis
 - manifestos de Kubernetes com HPA e limites de recursos

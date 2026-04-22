@@ -77,7 +77,7 @@ func main() {
 	repo := postgres.NewNotificationRepository(pool)
 	cache := redisadapter.NewUnreadCache(redisClient, cfg.UnreadCacheTTL)
 	idemp := redisadapter.NewIdempotencyStore(redisClient, cfg.IdempotencyTTL)
-	dlq := redisadapter.NewWebhookDeadLetterQueue(redisClient, cfg.WebhookDLQKey)
+	dlq := redisadapter.NewWebhookDeadLetterQueue(redisClient, cfg.WebhookDLQKey, cfg.WebhookDLQMaxLen)
 	publisher := redisadapter.NewPublisher(redisClient)
 	subscriber := redisadapter.NewSubscriber(redisClient)
 	hub := ws.NewHub()
