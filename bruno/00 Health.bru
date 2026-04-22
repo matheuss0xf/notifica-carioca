@@ -13,3 +13,11 @@ get {
 vars:pre-request {
   baseUrl: http://localhost:8080
 }
+
+script:post-response {
+  const body = res.getBody();
+
+  if (!body || body.status !== "ok") {
+    throw new Error("Health check did not return status=ok");
+  }
+}

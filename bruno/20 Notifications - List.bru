@@ -14,10 +14,60 @@ headers {
   Authorization: Bearer {{bearerToken}}
 }
 
+script:pre-request {
+  const CryptoJS = require("crypto-js");
+
+  function base64UrlEncodeWordArray(wordArray) {
+    return CryptoJS.enc.Base64.stringify(wordArray)
+      .replace(/=+$/g, "")
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_");
+  }
+
+  function base64UrlEncodeUtf8(value) {
+    return base64UrlEncodeWordArray(CryptoJS.enc.Utf8.parse(value));
+  }
+
+  const secret = bru.getEnvVar("jwtSecret");
+  const cpf = bru.getEnvVar("webhookCpf");
+  const ttlSeconds = Number(bru.getEnvVar("jwtTtlSeconds") || 3600);
+  const now = Math.floor(Date.now() / 1000);
+
+  const header = { alg: "HS256", typ: "JWT" };
+  const payload = {
+    preferred_username: cpf,
+    iat: now,
+    exp: now + ttlSeconds,
+  };
+
+  const encodedHeader = base64UrlEncodeUtf8(JSON.stringify(header));
+  const encodedPayload = base64UrlEncodeUtf8(JSON.stringify(payload));
+  const signature = base64UrlEncodeWordArray(
+    CryptoJS.HmacSHA256(`${encodedHeader}.${encodedPayload}`, secret)
+  );
+  const token = `${encodedHeader}.${encodedPayload}.${signature}`;
+
+  bru.setEnvVar("bearerToken", token);
+  req.setHeader("Authorization", `Bearer ${token}`);
+}
+
 script:post-response {
   const body = res.getBody();
-  
-  if (body && Array.isArray(body.data) && body.data.length > 0 && body.data[0].id) {
+
+  if (!body || !Array.isArray(body.data)) {
+    throw new Error("Notifications list did not return a page payload");
+  }
+
+  const targetChamadoId = bru.getEnvVar("webhookChamadoId");
+  const matched = body.data.find((item) => item.chamado_id === targetChamadoId);
+
+  if (matched && matched.id) {
+    bru.setEnvVar("notificationId", matched.id, { persist: true });
+  } else if (body.data.length > 0 && body.data[0].id) {
     bru.setEnvVar("notificationId", body.data[0].id, { persist: true });
+  }
+
+  if (body.next_cursor) {
+    bru.setEnvVar("nextCursor", body.next_cursor);
   }
 }

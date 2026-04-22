@@ -29,16 +29,23 @@ body:json {
 
 script:pre-request {
   const CryptoJS = require("crypto-js");
-  
+  const now = new Date();
+  const chamadoPrefix = bru.getEnvVar("webhookChamadoPrefix") || "CH-DEMO";
+  const chamadoId = `${chamadoPrefix}-${now.getTime()}`;
+  const timestamp = now.toISOString().replace(/\.\d{3}Z$/, "Z");
+
+  bru.setEnvVar("webhookChamadoId", chamadoId);
+  bru.setEnvVar("webhookTimestamp", timestamp);
+
   const payload = {
-    chamado_id: bru.getEnvVar("webhookChamadoId"),
+    chamado_id: chamadoId,
     tipo: bru.getEnvVar("webhookTipo"),
     cpf: bru.getEnvVar("webhookCpf"),
     status_anterior: bru.getEnvVar("webhookStatusAnterior"),
     status_novo: bru.getEnvVar("webhookStatusNovo"),
     titulo: bru.getEnvVar("webhookTitulo"),
     descricao: bru.getEnvVar("webhookDescricao"),
-    timestamp: bru.getEnvVar("webhookTimestamp"),
+    timestamp,
   };
   
   const body = JSON.stringify(payload);
@@ -47,4 +54,16 @@ script:pre-request {
   
   req.setBody(body);
   req.setHeader("x-signature-256", `sha256=${signature}`);
+}
+
+script:post-response {
+  const body = res.getBody();
+
+  if (!body || (body.message !== "notification created" && body.message !== "webhook already processed for chamado")) {
+    throw new Error("Webhook response did not match the expected success contract");
+  }
+
+  if (body.notification_id) {
+    bru.setEnvVar("notificationId", body.notification_id, { persist: true });
+  }
 }

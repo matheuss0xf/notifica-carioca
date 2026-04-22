@@ -9,3 +9,11 @@ get {
   body: none
   auth: none
 }
+
+script:post-response {
+  const body = res.getBody();
+
+  if (!body || (body.status !== "ready" && body.status !== "not_ready")) {
+    throw new Error("Readiness check returned an unexpected payload");
+  }
+}
