@@ -1,0 +1,15 @@
+meta {
+  name: Notifications - Mark Read
+  type: http
+  seq: 7
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/notifications/{{notificationId}}/read
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{bearerToken}}
+}

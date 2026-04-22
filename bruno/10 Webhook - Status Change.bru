@@ -1,0 +1,50 @@
+meta {
+  name: Webhook - Status Change
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/v1/webhooks/status-change
+  body: json
+  auth: none
+}
+
+headers {
+  content-type: application/json
+}
+
+body:json {
+  {
+    "chamado_id": "{{webhookChamadoId}}",
+    "tipo": "{{webhookTipo}}",
+    "cpf": "{{webhookCpf}}",
+    "status_anterior": "{{webhookStatusAnterior}}",
+    "status_novo": "{{webhookStatusNovo}}",
+    "titulo": "{{webhookTitulo}}",
+    "descricao": "{{webhookDescricao}}",
+    "timestamp": "{{webhookTimestamp}}"
+  }
+}
+
+script:pre-request {
+  const CryptoJS = require("crypto-js");
+  
+  const payload = {
+    chamado_id: bru.getEnvVar("webhookChamadoId"),
+    tipo: bru.getEnvVar("webhookTipo"),
+    cpf: bru.getEnvVar("webhookCpf"),
+    status_anterior: bru.getEnvVar("webhookStatusAnterior"),
+    status_novo: bru.getEnvVar("webhookStatusNovo"),
+    titulo: bru.getEnvVar("webhookTitulo"),
+    descricao: bru.getEnvVar("webhookDescricao"),
+    timestamp: bru.getEnvVar("webhookTimestamp"),
+  };
+  
+  const body = JSON.stringify(payload);
+  const secret = bru.getEnvVar("webhookSecret");
+  const signature = CryptoJS.HmacSHA256(body, secret).toString(CryptoJS.enc.Hex);
+  
+  req.setBody(body);
+  req.setHeader("x-signature-256", `sha256=${signature}`);
+}

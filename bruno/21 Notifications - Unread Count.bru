@@ -1,0 +1,15 @@
+meta {
+  name: Notifications - Unread Count
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/v1/notifications/unread-count
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{bearerToken}}
+}

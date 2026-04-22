@@ -1,0 +1,23 @@
+meta {
+  name: Notifications - List
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/v1/notifications?limit=10
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{bearerToken}}
+}
+
+script:post-response {
+  const body = res.getBody();
+  
+  if (body && Array.isArray(body.data) && body.data.length > 0 && body.data[0].id) {
+    bru.setEnvVar("notificationId", body.data[0].id, { persist: true });
+  }
+}
