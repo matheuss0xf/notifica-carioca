@@ -93,6 +93,10 @@ func main() {
 	notifHandler := handler.NewNotificationHandler(notificationReader, notificationReader, notificationMarker)
 	authMiddleware := middleware.NewAuthMiddleware(cfg.JWTSecret, cpfHasher)
 	requestLogger := middleware.NewRequestLogger()
+	securityHeaders := middleware.NewSecurityHeaders(cfg.EnableHSTS, cfg.HSTSMaxAgeSeconds)
+	webhookRateLimiter := middleware.NewRateLimiter("webhook", cfg.WebhookRateLimit, cfg.RateLimitWindow)
+	apiRateLimiter := middleware.NewRateLimiter("notifications", cfg.NotificationsRateLimit, cfg.RateLimitWindow)
+	wsRateLimiter := middleware.NewRateLimiter("websocket", cfg.WebSocketRateLimit, cfg.RateLimitWindow)
 	signatureMiddleware := middleware.NewSignatureMiddleware(cfg.WebhookSecret)
 	wsHandler := handler.NewWebSocketHandler(hub, authMiddleware, cfg.WSAllowedOrigins)
 
@@ -104,8 +108,12 @@ func main() {
 
 	router := server.NewRouter(
 		requestLogger.Handle(),
+		securityHeaders.Handle(),
 		healthHandler.Liveness,
 		healthHandler.Readiness,
+		webhookRateLimiter.Handle(),
+		apiRateLimiter.Handle(),
+		wsRateLimiter.Handle(),
 		signatureMiddleware.Handle(),
 		authMiddleware.Handle(),
 		webhookHandler.HandleStatusChange,

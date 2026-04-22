@@ -40,6 +40,12 @@ func TestLoadParsesAndNormalizesEnv(t *testing.T) {
 	t.Setenv("CPF_HASH_KEY", "cpf-hash-key")
 	t.Setenv("JWT_SECRET", "jwt-secret")
 	t.Setenv("WS_ALLOWED_ORIGINS", " https://app.example.com , ,https://citizen.example.com ")
+	t.Setenv("RATE_LIMIT_WINDOW", "2m")
+	t.Setenv("WEBHOOK_RATE_LIMIT", "10")
+	t.Setenv("NOTIFICATIONS_RATE_LIMIT", "20")
+	t.Setenv("WEBSOCKET_RATE_LIMIT", "5")
+	t.Setenv("ENABLE_HSTS", "true")
+	t.Setenv("HSTS_MAX_AGE_SECONDS", "123")
 
 	cfg, err := Load()
 	if err != nil {
@@ -52,5 +58,11 @@ func TestLoadParsesAndNormalizesEnv(t *testing.T) {
 	wantOrigins := []string{"https://app.example.com", "https://citizen.example.com"}
 	if !reflect.DeepEqual(cfg.WSAllowedOrigins, wantOrigins) {
 		t.Fatalf("expected normalized origins %v, got %v", wantOrigins, cfg.WSAllowedOrigins)
+	}
+	if cfg.WebhookRateLimit != 10 || cfg.NotificationsRateLimit != 20 || cfg.WebSocketRateLimit != 5 {
+		t.Fatalf("expected rate limits to be parsed, got %#v", cfg)
+	}
+	if !cfg.EnableHSTS || cfg.HSTSMaxAgeSeconds != 123 {
+		t.Fatalf("expected HSTS config to be parsed, got %#v", cfg)
 	}
 }

@@ -11,8 +11,12 @@ import (
 func TestNewRouterRegistersRoutes(t *testing.T) {
 	router := NewRouter(
 		func(c *gin.Context) { c.Next() },
+		func(c *gin.Context) { c.Next() },
 		func(c *gin.Context) { c.Status(http.StatusNoContent) },
 		func(c *gin.Context) { c.Status(http.StatusAccepted) },
+		func(c *gin.Context) { c.Next() },
+		func(c *gin.Context) { c.Next() },
+		func(c *gin.Context) { c.Next() },
 		func(c *gin.Context) { c.Next() },
 		func(c *gin.Context) { c.Next() },
 		func(c *gin.Context) { c.Status(http.StatusCreated) },

@@ -26,6 +26,13 @@ type Config struct {
 
 	WSAllowedOrigins []string `env:"WS_ALLOWED_ORIGINS" envSeparator:","`
 
+	RateLimitWindow        time.Duration `env:"RATE_LIMIT_WINDOW" envDefault:"1m"`
+	WebhookRateLimit       int           `env:"WEBHOOK_RATE_LIMIT" envDefault:"60"`
+	NotificationsRateLimit int           `env:"NOTIFICATIONS_RATE_LIMIT" envDefault:"120"`
+	WebSocketRateLimit     int           `env:"WEBSOCKET_RATE_LIMIT" envDefault:"30"`
+	EnableHSTS             bool          `env:"ENABLE_HSTS" envDefault:"false"`
+	HSTSMaxAgeSeconds      int           `env:"HSTS_MAX_AGE_SECONDS" envDefault:"31536000"`
+
 	IdempotencyTTL time.Duration `env:"IDEMPOTENCY_TTL" envDefault:"24h"`
 	UnreadCacheTTL time.Duration `env:"UNREAD_CACHE_TTL" envDefault:"1h"`
 }

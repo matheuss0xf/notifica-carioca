@@ -29,7 +29,7 @@ O diretório `.agents/` é versionado intencionalmente neste repositório porque
 
 ### Por que Redis + PostgreSQL, sem Kafka?
 
-O volume estimado do desafio é bem atendido por Go + PostgreSQL + Redis. Kafka adicionaria complexidade operacional sem benefício proporcional para este cenário.
+O volume estimado do desafio é bem atendido por Go + PostgreSQL + Redis. Kafka adicionaria complexidade operacional sem benefício proporcional neste cenário.
 
 | Componente | Papel |
 |---|---|
@@ -54,6 +54,14 @@ O CPF nunca é armazenado em texto ou em hash reversível.
 ### Paginação por Cursor
 
 Em vez de `OFFSET`, a paginação usa cursor ancorado em `(created_at, id)` para manter performance consistente.
+
+### Hardening Atual
+
+O serviço já aplica um pacote básico de hardening:
+
+- rate limiting por IP para webhook, endpoints de notificações e tentativas de conexão WebSocket
+- security headers globais, incluindo `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` e `Content-Security-Policy`
+- `Strict-Transport-Security` opcional por configuração, para ambientes com HTTPS real
 
 ### WebSocket com Canal Único
 
@@ -263,6 +271,12 @@ wscat -c "ws://localhost:8080/ws" -H "Authorization: Bearer $TOKEN"
 | `SERVER_PORT` | ❌ | 8080 | Porta do servidor HTTP |
 | `REDIS_PASSWORD` | ❌ | dev only | Senha do Redis no ambiente local |
 | `REDIS_URL` | ❌ | redis://default:my-redis-password-change-me@localhost:6379/0 | String de conexão do Redis |
+| `RATE_LIMIT_WINDOW` | ❌ | 1m | Janela de rate limiting por IP |
+| `WEBHOOK_RATE_LIMIT` | ❌ | 60 | Limite por IP para o endpoint de webhook dentro da janela |
+| `NOTIFICATIONS_RATE_LIMIT` | ❌ | 120 | Limite por IP para os endpoints de notificações dentro da janela |
+| `WEBSOCKET_RATE_LIMIT` | ❌ | 30 | Limite por IP para tentativas de conexão WebSocket dentro da janela |
+| `ENABLE_HSTS` | ❌ | false | Habilita o header Strict-Transport-Security em ambientes com HTTPS real |
+| `HSTS_MAX_AGE_SECONDS` | ❌ | 31536000 | Valor de `max-age` do header HSTS em segundos |
 | `IDEMPOTENCY_TTL` | ❌ | 24h | TTL da chave de idempotência no Redis |
 | `UNREAD_CACHE_TTL` | ❌ | 1h | TTL do cache de não lidas |
 | `SHUTDOWN_TIMEOUT` | ❌ | 10s | Timeout para graceful shutdown |
@@ -276,7 +290,6 @@ wscat -c "ws://localhost:8080/ws" -H "Authorization: Bearer $TOKEN"
 
 ## O que Eu Faria com Mais Tempo
 
-- rate limiting por IP no webhook e por cidadão na API
 - SSE como fallback do WebSocket
 - endpoint batch para receber múltiplos webhooks
 - particionamento da tabela `notifications` por mês
