@@ -27,6 +27,9 @@ spec:
       labels:
         app: redis
     spec:
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: redis
           image: redis:7-alpine
@@ -45,6 +48,11 @@ spec:
           volumeMounts:
             - name: redis-data
               mountPath: /data
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
           readinessProbe:
             exec:
               command:

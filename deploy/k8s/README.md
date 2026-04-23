@@ -6,10 +6,11 @@ Inclui:
 
 - `namespace.yaml`
 - `configmap.yaml`
-- `secret.example.yaml`
+- `examples/secret.example.yaml`
 - `postgres.yaml`
 - `redis.yaml`
 - `api.yaml`
+- `network-policy.yaml`
 - `hpa.yaml` opcional
 
 ## O que esses manifests assumem
@@ -53,16 +54,24 @@ Nao versione credenciais no Git. Gere o Secret diretamente no cluster:
 ```bash
 kubectl apply -f deploy/k8s/namespace.yaml
 
+export POSTGRES_USER=notifica
+export POSTGRES_PASSWORD='<set-locally>'
+export POSTGRES_DB=notifica_carioca
+export REDIS_PASSWORD='<set-locally>'
+export WEBHOOK_SECRET='<set-locally>'
+export CPF_HASH_KEY='<set-locally>'
+export JWT_SECRET='<set-locally>'
+
 kubectl -n notifica-carioca create secret generic notifica-carioca-secrets \
-  --from-literal=POSTGRES_USER=notifica \
-  --from-literal=POSTGRES_PASSWORD=troque-essa-senha \
-  --from-literal=POSTGRES_DB=notifica_carioca \
-  --from-literal=REDIS_PASSWORD=troque-essa-senha \
-  --from-literal=DATABASE_URL='postgres://notifica:troque-essa-senha@postgres:5432/notifica_carioca?sslmode=disable' \
-  --from-literal=REDIS_URL='redis://default:troque-essa-senha@redis:6379/0' \
-  --from-literal=WEBHOOK_SECRET=troque-esse-secret \
-  --from-literal=CPF_HASH_KEY=troque-essa-chave \
-  --from-literal=JWT_SECRET=troque-esse-jwt-secret
+  --from-literal=POSTGRES_USER="$POSTGRES_USER" \
+  --from-literal=POSTGRES_PASSWORD="$POSTGRES_PASSWORD" \
+  --from-literal=POSTGRES_DB="$POSTGRES_DB" \
+  --from-literal=REDIS_PASSWORD="$REDIS_PASSWORD" \
+  --from-literal=DATABASE_URL="postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres:5432/$POSTGRES_DB?sslmode=disable" \
+  --from-literal=REDIS_URL="redis://default:$REDIS_PASSWORD@redis:6379/0" \
+  --from-literal=WEBHOOK_SECRET="$WEBHOOK_SECRET" \
+  --from-literal=CPF_HASH_KEY="$CPF_HASH_KEY" \
+  --from-literal=JWT_SECRET="$JWT_SECRET"
 ```
 
 Se precisar recriar:
@@ -71,7 +80,7 @@ Se precisar recriar:
 kubectl -n notifica-carioca delete secret notifica-carioca-secrets
 ```
 
-O arquivo `secret.example.yaml` existe apenas como referencia do formato esperado.
+O arquivo `examples/secret.example.yaml` existe apenas como referencia do formato esperado.
 
 ### 5. Aplique os manifests
 
@@ -80,6 +89,7 @@ kubectl apply -f deploy/k8s/configmap.yaml
 kubectl apply -f deploy/k8s/postgres.yaml
 kubectl apply -f deploy/k8s/redis.yaml
 kubectl apply -f deploy/k8s/api.yaml
+kubectl apply -f deploy/k8s/network-policy.yaml
 ```
 
 Se quiser testar autoscaling:
@@ -133,6 +143,7 @@ kubectl delete namespace notifica-carioca
 
 ## Notas
 
-- `secret.example.yaml` e apenas um modelo sanitizado; ele nao deve ser aplicado como fonte de verdade.
+- `examples/secret.example.yaml` e apenas um modelo sanitizado; ele nao deve ser aplicado como fonte de verdade.
 - se `secret.yaml` ja chegou a existir em algum commit local ou remoto, faca rotacao das senhas e chaves antes de publicar.
 - os manifests usam `port-forward` como forma mais simples de acesso local; nao ha `Ingress` nem `NodePort`.
+- `network-policy.yaml` depende do CNI do cluster aplicar `NetworkPolicy`; no Minikube com alguns drivers isso pode ser limitado.
