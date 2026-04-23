@@ -19,6 +19,62 @@ Inclui:
 - a imagem da API sera carregada no cluster com a tag `notifica-carioca:local`
 - PostgreSQL e Redis sobem no proprio cluster, com `Service` interno
 
+## Quick start a partir do GitHub
+
+Use este fluxo se voce acabou de clonar o projeto e quer subir tudo em Kubernetes local:
+
+```bash
+git clone https://github.com/matheuss0xf/notifica-carioca.git
+cd notifica-carioca
+
+minikube start
+
+docker build -t notifica-carioca:local .
+minikube image load notifica-carioca:local
+
+kubectl apply -f deploy/k8s/namespace.yaml
+
+export POSTGRES_USER=notifica
+export POSTGRES_PASSWORD="$(openssl rand -hex 24)"
+export POSTGRES_DB=notifica_carioca
+export REDIS_PASSWORD="$(openssl rand -hex 24)"
+export WEBHOOK_SECRET="$(openssl rand -hex 32)"
+export CPF_HASH_KEY="$(openssl rand -hex 32)"
+export JWT_SECRET="$(openssl rand -hex 32)"
+
+kubectl -n notifica-carioca create secret generic notifica-carioca-secrets \
+  --from-literal=POSTGRES_USER="$POSTGRES_USER" \
+  --from-literal=POSTGRES_PASSWORD="$POSTGRES_PASSWORD" \
+  --from-literal=POSTGRES_DB="$POSTGRES_DB" \
+  --from-literal=REDIS_PASSWORD="$REDIS_PASSWORD" \
+  --from-literal=DATABASE_URL="postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres:5432/$POSTGRES_DB?sslmode=disable" \
+  --from-literal=REDIS_URL="redis://default:$REDIS_PASSWORD@redis:6379/0" \
+  --from-literal=WEBHOOK_SECRET="$WEBHOOK_SECRET" \
+  --from-literal=CPF_HASH_KEY="$CPF_HASH_KEY" \
+  --from-literal=JWT_SECRET="$JWT_SECRET"
+
+kubectl apply -f deploy/k8s/configmap.yaml
+kubectl apply -f deploy/k8s/postgres.yaml
+kubectl apply -f deploy/k8s/redis.yaml
+kubectl apply -f deploy/k8s/api.yaml
+kubectl apply -f deploy/k8s/network-policy.yaml
+
+kubectl -n notifica-carioca wait --for=condition=ready pod \
+  -l app=notifica-carioca-api \
+  --timeout=180s
+
+kubectl -n notifica-carioca port-forward svc/notifica-carioca-api 8080:8080
+```
+
+Em outro terminal:
+
+```bash
+curl http://localhost:8080/health
+curl http://localhost:8080/ready
+```
+
+No Windows PowerShell, se voce nao tiver `openssl`, defina os valores manualmente antes do `kubectl create secret`.
+
 ## Rodando localmente com Minikube
 
 ### 1. Suba o cluster
