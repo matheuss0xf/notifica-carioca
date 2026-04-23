@@ -345,6 +345,31 @@ curl -X PATCH -H "Authorization: Bearer $TOKEN" \
 wscat -c "ws://localhost:8080/ws" -H "Authorization: Bearer $TOKEN"
 ```
 
+### Frontend Local para WebSocket
+
+O repositório inclui uma página estática para testar a entrega em tempo real sem depender de Bruno ou `wscat`:
+
+```bash
+just ws-tester
+```
+
+Abra:
+
+```text
+http://localhost:5173
+```
+
+Para o navegador conseguir fazer o handshake, configure a origem do tester no `.env` e reinicie a stack:
+
+```bash
+WS_ALLOWED_ORIGINS=http://localhost:5173
+
+just down
+just up
+```
+
+Na tela, conecte o WebSocket, gere o `curl` assinado do webhook e execute o comando em outro terminal. A notificação deve aparecer na lista de mensagens recebidas.
+
 ---
 
 ## Variáveis de Ambiente

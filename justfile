@@ -75,6 +75,12 @@ load:
 load-flow:
     mise exec -- k6 run ./k6/full_flow.js
 
+# Serve the local WebSocket tester UI
+ws-tester:
+    @echo "Before opening the UI, set WS_ALLOWED_ORIGINS=http://localhost:5173 in .env and restart the stack."
+    @echo "Open: http://localhost:5173"
+    cd tools/ws-tester && python3 -m http.server 5173
+
 # Tidy dependencies
 tidy:
     go mod tidy

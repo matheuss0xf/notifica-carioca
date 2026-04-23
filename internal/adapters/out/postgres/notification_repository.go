@@ -35,14 +35,18 @@ func (r *NotificationRepository) Create(ctx context.Context, n *domain.Notificat
 		INSERT INTO notifications (id, chamado_id, cpf_hash, tipo, status_anterior, status_novo, titulo, descricao, event_timestamp)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		ON CONFLICT (chamado_id, status_novo, event_timestamp) DO NOTHING
-		RETURNING id`
+		RETURNING id, chamado_id, tipo, status_anterior, status_novo,
+		          titulo, descricao, read_at, event_timestamp, created_at`
 
-	var returnedID uuid.UUID
 	err := r.pool.QueryRow(ctx, query,
 		n.ID, n.ChamadoID, n.CPFHash, n.Tipo,
 		n.StatusAnterior, n.StatusNovo, n.Titulo,
 		n.Descricao, n.EventTimestamp,
-	).Scan(&returnedID)
+	).Scan(
+		&n.ID, &n.ChamadoID, &n.Tipo, &n.StatusAnterior,
+		&n.StatusNovo, &n.Titulo, &n.Descricao,
+		&n.ReadAt, &n.EventTimestamp, &n.CreatedAt,
+	)
 
 	if err == pgx.ErrNoRows {
 		return false, nil // Duplicate — idempotent

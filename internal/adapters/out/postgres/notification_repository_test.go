@@ -79,7 +79,7 @@ func (s *fakeStore) Exec(ctx context.Context, sql string, args ...any) (pgconn.C
 
 func TestNotificationRepositoryCreate(t *testing.T) {
 	id := uuid.New()
-	notification := &domain.Notification{ID: id}
+	now := time.Now().UTC()
 
 	tests := []struct {
 		name    string
@@ -93,6 +93,15 @@ func TestNotificationRepositoryCreate(t *testing.T) {
 				queryRowFn: func(ctx context.Context, sql string, args ...any) pgx.Row {
 					return fakeRow{scanFn: func(dest ...any) error {
 						*(dest[0].(*uuid.UUID)) = id
+						*(dest[1].(*string)) = "CH-1"
+						*(dest[2].(*string)) = "status_change"
+						*(dest[3].(**string)) = nil
+						*(dest[4].(*string)) = "em_execucao"
+						*(dest[5].(*string)) = "Titulo"
+						*(dest[6].(**string)) = nil
+						*(dest[7].(**time.Time)) = nil
+						*(dest[8].(*time.Time)) = now
+						*(dest[9].(*time.Time)) = now
 						return nil
 					}}
 				},
@@ -120,6 +129,7 @@ func TestNotificationRepositoryCreate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			notification := &domain.Notification{ID: id}
 			repo := &NotificationRepository{pool: tt.store}
 			got, err := repo.Create(context.Background(), notification)
 			if tt.wantErr {
@@ -133,6 +143,9 @@ func TestNotificationRepositoryCreate(t *testing.T) {
 			}
 			if got != tt.want {
 				t.Fatalf("expected created=%v, got %v", tt.want, got)
+			}
+			if tt.want && notification.CreatedAt.IsZero() {
+				t.Fatal("expected created notification to have CreatedAt populated")
 			}
 		})
 	}

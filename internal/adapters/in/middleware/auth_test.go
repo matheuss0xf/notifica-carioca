@@ -60,7 +60,7 @@ func TestAuthenticateTokenRejectsInvalidCPF(t *testing.T) {
 	}
 }
 
-func TestExtractTokenIgnoresQueryStringFallback(t *testing.T) {
+func TestExtractTokenPrefersHeaderAndFallsBackToQueryString(t *testing.T) {
 	req := httptest.NewRequest("GET", "/ws?token=query-token", nil)
 	req.Header.Set("Authorization", "Bearer header-token")
 
@@ -69,8 +69,8 @@ func TestExtractTokenIgnoresQueryStringFallback(t *testing.T) {
 	}
 
 	req = httptest.NewRequest("GET", "/ws?token=query-token", nil)
-	if got := ExtractToken(req); got != "" {
-		t.Fatalf("expected empty token without Authorization header, got %q", got)
+	if got := ExtractToken(req); got != "query-token" {
+		t.Fatalf("expected query token without Authorization header, got %q", got)
 	}
 }
 

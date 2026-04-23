@@ -108,7 +108,11 @@ func extractBearerToken(r *http.Request) string {
 	return ""
 }
 
-// ExtractToken extracts JWT from the Authorization header.
+// ExtractToken extracts JWT from the Authorization header, falling back to the
+// token query parameter for browser WebSocket clients.
 func ExtractToken(r *http.Request) string {
-	return extractBearerToken(r)
+	if token := extractBearerToken(r); token != "" {
+		return token
+	}
+	return strings.TrimSpace(r.URL.Query().Get("token"))
 }

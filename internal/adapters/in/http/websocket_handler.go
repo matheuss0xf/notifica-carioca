@@ -45,7 +45,6 @@ func (h *WebSocketHandler) originAllowed(r *http.Request) bool {
 // Handle upgrades an HTTP connection to WebSocket.
 // GET /ws (Authorization header or ?token= query param)
 func (h *WebSocketHandler) Handle(c *gin.Context) {
-	// Extract JWT from header or query param fallback
 	tokenString := middleware.ExtractToken(c.Request)
 	if tokenString == "" {
 		httpx.JSONError(c, http.StatusUnauthorized, "missing_token", "missing authorization token")
