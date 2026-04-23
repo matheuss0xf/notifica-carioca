@@ -28,6 +28,10 @@ func (m *RequestLogger) Handle() gin.HandlerFunc {
 			route = c.Request.URL.Path
 		}
 
+		if shouldSkipRequestLog(route, c.Request.URL.Path) {
+			return
+		}
+
 		latency := time.Since(start)
 		status := c.Writer.Status()
 
@@ -58,4 +62,8 @@ func (m *RequestLogger) Handle() gin.HandlerFunc {
 
 		logger.Log(c.Request.Context(), level, "http request completed")
 	}
+}
+
+func shouldSkipRequestLog(route, path string) bool {
+	return route == "/health" || route == "/ready" || path == "/health" || path == "/ready"
 }
